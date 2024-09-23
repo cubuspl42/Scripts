@@ -1,0 +1,12 @@
+#!/bin/bash
+
+# Check if the input file is provided
+if [ -z "$1" ]; then
+  echo "Usage: $0 <input_tag>"
+  exit 1
+fi
+
+# Get input tag
+input_tag="$1"
+
+xcrun simctl io booted recordVideo -f ~/Desktop/Screengrabs/$input_tag-ios-web.mov

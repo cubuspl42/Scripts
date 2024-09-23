@@ -1,0 +1,25 @@
+#!/usr/bin/env python3
+
+import pyperclip
+import subprocess
+
+expensify_url_prefix = 'https://new.expensify.com'
+expensify_protocol_prefix = 'new-expensify:/'
+
+# Get clipboard content
+clipboard_content = pyperclip.paste()
+
+# Replace "foo" with "bar"
+expensify_protocol_uri = clipboard_content.replace(expensify_url_prefix, expensify_protocol_prefix)
+
+command = f"npx uri-scheme open '{expensify_protocol_uri}'"
+
+# Execute the modified clipboard content as shell command
+process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+stdout, stderr = process.communicate()
+
+# Print the output
+if process.returncode != 0:
+    print(f'Error occurred: {stderr.decode()}')
+else:
+    print(stdout.decode())

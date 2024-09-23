@@ -1,0 +1,20 @@
+#!/bin/bash
+
+set -x
+
+prefix="$1"
+
+cd ~/Desktop/Screengrabs
+
+mv ~/Desktop/$prefix-web.mov .
+mv ~/Desktop/$prefix-desktop.mov .
+
+adb pull /sdcard/Movies/$prefix-android.mp4 .
+adb pull /sdcard/Movies/$prefix-android-web.mp4 .
+
+~/Scripts/ffmpeg-to-mp4 "$prefix-web.mov"
+~/Scripts/ffmpeg-to-mp4 "$prefix-desktop.mov"
+~/Scripts/ffmpeg-compress.py "$prefix-ios.mov"
+~/Scripts/ffmpeg-compress.py "$prefix-ios-web.mov"
+~/Scripts/ffmpeg-compress.py "$prefix-android.mp4"
+~/Scripts/ffmpeg-compress.py "$prefix-android-web.mp4"

@@ -1,0 +1,30 @@
+#!/bin/bash
+
+suffix="web"
+
+# Check if tag is provided
+if [ -z "$1" ]
+  then
+    echo "No tag provided. Provide a tag as a command line argument."
+    exit 1
+fi
+
+tag=$1
+
+source_dir=~/Desktop
+target_dir=~/Desktop/Screengrabs
+
+# Find the last created "Screen Recording" .mov file
+last_file=$(ls -t ${source_dir}/Screen\ Recording*.mov | head -n 1)
+
+# Check if a "Screen Recording" .mov file exists
+if [ -z "$last_file" ]
+  then
+    echo "No 'Screen Recording' .mov file found on Desktop."
+    exit 1
+fi
+
+# Move and rename the last created file
+mv "$last_file" "${target_dir}/${tag}-${suffix}.mov"
+
+echo "Successfully moved the file to ${target_dir}/${tag}-web.mov"

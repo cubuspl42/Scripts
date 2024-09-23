@@ -1,0 +1,24 @@
+#!/bin/bash
+
+# Check if ffmpeg is installed
+if ! command -v ffmpeg &> /dev/null
+then
+    echo "ffmpeg could not be found. Please install it and try again."
+    exit 1
+fi
+
+# Check if a file path was provided
+if [ -z "$1" ]
+then
+    echo "Please provide a file path."
+    exit 1
+fi
+
+# Get the input file path and remove the extension to get the base name
+input_file="$1"
+base_name="${input_file%.*}"
+
+# Run the ffmpeg command with the input file and output file
+ffmpeg -i "$input_file" -q:v 0 -an "out/${base_name}.mp4"
+
+echo "Conversion complete: ${base_name}.mp4"

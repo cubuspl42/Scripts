@@ -1,0 +1,12 @@
+#!/usr/bin/expect
+
+set base [lindex $argv 0]
+
+spawn gh pr create --base $base --fill
+
+send -- "\r"
+
+expect eof
+
+spawn gh pr merge --auto --rebase
+expect eof

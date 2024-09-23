@@ -1,0 +1,10 @@
+#!/bin/bash
+
+if [ -z "$1" ]
+then
+    echo "No argument supplied. Please provide a file path."
+else
+    touch "$1"
+    chmod +x "$1"
+    code "$1"
+fi

@@ -1,0 +1,26 @@
+#!/bin/bash
+
+# Check if the input file is provided
+if [ -z "$1" ]; then
+  echo "Usage: $0 <input_file>"
+  exit 1
+fi
+
+# Get input file
+input_file="$1"
+
+# Get the basename without extension
+input_basename="$(basename "${input_file%.*}")"
+
+# Define output file
+output_file="${input_basename}-compressed.mp4"
+
+# Get original resolution and calculate the new resolution
+original_width=$(ffprobe -v error -select_streams v:0 -show_entries stream=width -of default=nw=1:nk=1 "${input_file}")
+original_height=$(ffprobe -v error -select_streams v:0 -show_entries stream=height -of default=nw=1:nk=1 "${input_file}")
+
+new_width=$(( ${original_width} / 2 ))
+new_height=$(( ${original_height} / 2 ))
+
+# Compress video using H.264 codec and resize resolution
+ffmpeg -i "${input_file}" -vf "scale=${new_width}:${new_height}" -c:v libx264 -preset slow -crf 23 -pix_fmt yuv420p "out/${output_file}"
