@@ -40,43 +40,64 @@ def has_diff(commit, reference_commit):
 def main():
     args = parser.parse_args()
 
-    target_string = args.configtarget_file_path
+    target = args.target
     force = args.force
 
     repo = git.Repo('.')  # Assumes script is run from the repo root
 
-    target_commit = repo.commit(target_string)
+    target_commit = repo.commit(target)
 
     if not target_commit:
-        print(f"{target_string} not found in the repository.")
+        print(f"{target} not found in the repository")
+        print("Exiting")
         return
 
     # Resolve HEAD programmatically
     head_commit = repo.head.commit
 
-    # Check if the original parent is an ancestor of HEAD
-    if not is_ancestor(repo=repo, ancestor_commit=target_commit, descendant_commit=head_commit):
-        target_commit_equivalent = find_ancestor_with_message(
-            repo=repo,
-            ref=head_commit,
-            message=target_commit.message,
-        )
+    merge_base_commits = repo.merge_base(head_commit, target_commit)
 
-        if target_commit_equivalent:
-            print(f"Found ancestor with matching message: {target_commit_equivalent.hexsha}")
+    if len(merge_base_commits) != 1:
+        print("Multiple merge base commits found. Cannot proceed with rebase")
+        print("Exiting")
+        return
 
-            if force or not has_diff(commit=target_commit, reference_commit=target_commit_equivalent):
-                # TODO: Rebase
+    merge_base_commit = merge_base_commits[0]
 
-                print(f"Rebased {target_commit_equivalent.hexsha} onto {target_string}")
-            else:
-                print(
-                    f"There are differences between the commit {target_string} and the ancestor {target_commit_equivalent.hexsha}. No update made.")
-        else:
-            print("No ancestor with the same commit message found within the specified depth.")
+    target_diverged_commits = repo.iter_commits(f'{target_commit.hexsha}...{merge_base_commit.hexsha}')
+    head_diverged_commits = repo.iter_commits(f'{head_commit.hexsha}...{merge_base_commit.hexsha}')
 
-    else:
-        print(f"The parent {target_string} is an ancestor of HEAD. No rebase required.")
+    target_diverged_commit_by_message = {
+        commit.message: commit for commit in target_diverged_commits
+    }
+
+    # Find the first commit in the head that has a message matching one of the target's diverged commits
+    rebase_base_commit = next(
+        (commit for commit in head_diverged_commits if commit.message in target_diverged_commit_by_message),
+        None,
+    )
+
+    if not rebase_base_commit:
+        print("No similar commit found in HEAD that matches one of the target's diverged commits")
+        print("Exiting")
+        return
+
+    print("Found rebase base commit:", rebase_base_commit.hexsha)
+    print(rebase_base_commit.message.strip())
+
+    target_similar_commit = target_diverged_commit_by_message.get(rebase_base_commit.message)
+
+    if not force and has_diff(commit=target_similar_commit, reference_commit=rebase_base_commit):
+        print(f"There are differences between the commit {rebase_base_commit.hexsha} and the target's similar commit {target_similar_commit.hexsha}")
+        print("Exiting")
+        return
+
+    try:
+        repo.git.rebase(rebase_base_commit.hexsha, onto=target_commit.hexsha)
+
+        print(f"Rebased onto {target} (base: {rebase_base_commit.hexsha})")
+    except git.exc.GitCommandError as e:
+        print(f"Rebase failed: {e}")
 
 
 if __name__ == "__main__":
