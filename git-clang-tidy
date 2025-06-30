@@ -1,0 +1,15 @@
+#!/bin/bash
+
+# Get the list of changed C++ files
+changed_files=$(git diff --name-only --cached HEAD | grep -E '\.(cpp|hpp|cc|cxx|h)$')
+
+if [ -z "$changed_files" ]; then
+  echo "No C++ files in the current changes."
+  exit 0
+fi
+
+# Run clang-tidy on each changed file
+for file in $changed_files; do
+  echo "Running clang-tidy on $file"
+  clang-tidy $file -- -I/path/to/include
+done
